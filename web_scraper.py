@@ -1,4 +1,5 @@
 import os
+import json
 import argparse
 
 from selenium import webdriver
@@ -6,7 +7,7 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 
-from parser import extract_body_html
+from parser import extract_body_html, extract_nested_values
 
 SCRAPER_BROWSER = os.environ.get("SCRAPER_BROWSER")
 
@@ -71,7 +72,10 @@ def get_page_details(
     driver, links_file, definition_file, output_file
 ):
     link_file = open(links_file, "r")
-    data_file = open(output_file, "w")
+    # clear links file each run
+    if os.path.exists(output_file):
+        os.remove(output_file)
+    data_file = open(output_file, "a")
     link = link_file.readline()
     # iterate through links
     while link:
@@ -80,9 +84,11 @@ def get_page_details(
         # get html from link,
         html = extract_body_html(driver)
         # parse and extract data locally
-        # TO BE IMPLEMENTED
+        elements = extract_nested_values(html, definition_file)
         # write to file
-        data_file.write("PLACEHOLDER")
+        json.dump(elements, data_file)
+        data_file.write("\n")
+        # data_file.write('\n'.join(elements))
         link = link_file.readline()
 
 
@@ -107,14 +113,14 @@ if __name__ == "__main__":
 
     links_file = "./links.txt"
     driver.get(args.scrape_url)
-    navigate_and_extract_links(
-        driver,
-        args.div_class,
-        links_file,
-        args.button_class,
-        args.anchor_class,
-        args.span_class,
-    )
+    # navigate_and_extract_links(
+    #     driver,
+    #     args.div_class,
+    #     links_file,
+    #     args.button_class,
+    #     args.anchor_class,
+    #     args.span_class,
+    # )
     get_page_details(
         driver,
         links_file,
